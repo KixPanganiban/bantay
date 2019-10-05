@@ -6,13 +6,18 @@ Lightweight uptime monitor for web services
 
 This project requires Go to be installed. On OS X with Homebrew you can just run `brew install go`.
 
-Write a `checks.yml` ([see section below](#example-checks.yml)) to define the uptime checks you want to run, along with settings and reporters. Then, running it then should be as simple as:
+Write a `checks.yml` ([see section below](#example-checksyml)) to define the uptime checks you want to run, along with settings and reporters. Then, running it then should be as simple as:
 
 ```console
 $ make
 $ vim checks.yml
-$ ./bin/bantay
+$ ./bin/bantay check
 ```
+to run the checks once, or
+```console
+$ ./bin/bantay server
+```
+to run checks over and over, on the interval specified in `checks.yml` as `poll_interval`.
 
 ## Example `checks.yml`
 
