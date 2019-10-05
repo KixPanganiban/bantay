@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/KixPanganiban/bantay/log"
+	"github.com/KixPanganiban/bantay/version"
 
 	"github.com/imroc/req"
 )
@@ -28,7 +29,9 @@ type CheckResult struct {
 // RunCheck performs the HTTP request necessary to verify if the given Check is up
 func RunCheck(c Check, resChan chan<- CheckResult) {
 	r := req.New()
-	res, err := r.Get(c.URL)
+	res, err := r.Get(
+		c.URL,
+		req.Header{"User-Agent": fmt.Sprintf("Bantay %s", version.Version)})
 	if err != nil {
 		log.Warnf("Request failed: %s", err.Error())
 		resChan <- CheckResult{Name: c.Name, Success: false, Message: err.Error()}
@@ -58,7 +61,7 @@ func RunCheck(c Check, resChan chan<- CheckResult) {
 }
 
 // RunChecks calls RunCheck for every Check provided in slice cs and returns counts for failed, successful, total
-func RunChecks(cs *[]Check, r *[]Reporter) (int, int, int) {
+func RunChecks(cs *[]Check, r *[]Reporter, downCounter map[string]int) (int, int, int) {
 	var (
 		failed     int
 		successful int
@@ -66,6 +69,7 @@ func RunChecks(cs *[]Check, r *[]Reporter) (int, int, int) {
 	)
 	failed, successful = 0, 0
 	total = len(*cs)
+
 	resChan := make(chan CheckResult, total)
 	for _, c := range *cs {
 		go RunCheck(c, resChan)
@@ -74,14 +78,15 @@ func RunChecks(cs *[]Check, r *[]Reporter) (int, int, int) {
 		for i := 0; i < total; i++ {
 			res := <-resChan
 			for _, reporter := range *r {
-				reporter.Report(res)
+				reporter.Report(res, &downCounter)
 			}
 			if res.Success == true {
 				successful++
+				downCounter[res.Name] = 0
 			} else {
 				failed++
+				downCounter[res.Name]++
 			}
-
 		}
 	}()
 	return failed, successful, total
