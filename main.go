@@ -1,13 +1,11 @@
 package main
 
 import (
-	
-	"github.com/kixpanganiban/bantay/cmd"
+	"github.com/KixPanganiban/bantay/cmd"
 )
 
 func main() {
 
-    
-    cmd.Execute()
-	
+	cmd.Execute()
+
 }
