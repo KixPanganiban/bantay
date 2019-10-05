@@ -29,7 +29,7 @@ checks:
   - name: Google
     url: https://www.google.com/
     valid_status: 200
-  - Hacker News
+  - name: Hacker News
     url: https://news.ycombinator.com/
     valid_status: 200
     body_match: Hacker News
