@@ -12,8 +12,14 @@ type ParsedReporter struct {
 	Options map[string]interface{} `yaml:"options"`
 }
 
+// ParsedServer represents server config
+type ParsedServer struct {
+	PollInterval uint32 `yaml:"poll_interval"`
+}
+
 // ParsedConfig represents the unmarshalled YAML file
 type ParsedConfig struct {
+	Server            ParsedServer     `yaml:"server"`
 	Checks            *[]Check         `yaml:"checks"`
 	Reporters         []ParsedReporter `yaml:"reporters"`
 	ExportedReporters []Reporter       `yaml:"donotunmarshal"`

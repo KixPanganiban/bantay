@@ -42,8 +42,8 @@ var serverCmd = &cobra.Command{
 			} else {
 				log.Infof("Failed/Successful/Total: %d/%d/%d", failed, successful, total)
 			}
-			log.Debugln("Sleeping for 10 seconds.")
-			time.Sleep(10 * time.Second)
+			log.Debugf("Sleeping for %d seconds.\n", config.Server.PollInterval)
+			time.Sleep(time.Duration(config.Server.PollInterval) * time.Second)
 		}
 	},
 }
