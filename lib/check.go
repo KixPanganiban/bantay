@@ -58,7 +58,7 @@ func RunCheck(c Check, resChan chan<- CheckResult) {
 }
 
 // RunChecks calls RunCheck for every Check provided in slice cs and returns counts for failed, successful, total
-func RunChecks(cs *[]Check) (int, int, int) {
+func RunChecks(cs *[]Check, r *[]Reporter) (int, int, int) {
 	var (
 		failed     int
 		successful int
@@ -73,18 +73,15 @@ func RunChecks(cs *[]Check) (int, int, int) {
 	func() {
 		for i := 0; i < total; i++ {
 			res := <-resChan
-			switch res.Success {
-			case true:
-				{
-					log.Infof("[%s] Check successful.", res.Name)
-					successful++
-				}
-			case false:
-				{
-					log.Debugf("[%s] Check failed. Reason: %s", res.Name, res.Message)
-					failed++
-				}
+			for _, reporter := range *r {
+				reporter.Report(res)
 			}
+			if res.Success == true {
+				successful++
+			} else {
+				failed++
+			}
+
 		}
 	}()
 	return failed, successful, total

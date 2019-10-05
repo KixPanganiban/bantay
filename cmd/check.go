@@ -28,7 +28,7 @@ var checkCmd = &cobra.Command{
 			log.Error("Unable to parse checks.yml: " + err.Error())
 			return
 		}
-		failed, successful, total := lib.RunChecks(checks)
+		failed, successful, total := lib.RunChecks(checks, &[]lib.Reporter{lib.LogReporter{}})
 		if failed >= successful {
 			log.Warnf("Failed/Successful/Total: %d/%d/%d", failed, successful, total)
 		} else {
