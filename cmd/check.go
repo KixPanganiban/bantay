@@ -23,12 +23,14 @@ var checkCmd = &cobra.Command{
 			log.Error("Unable to open checks.yml")
 			return
 		}
-		checks, err := lib.ParseYAML(checksFileBytes)
+		config, err := lib.ParseYAML(checksFileBytes)
 		if err != nil {
 			log.Error("Unable to parse checks.yml: " + err.Error())
 			return
 		}
-		failed, successful, total := lib.RunChecks(checks, &[]lib.Reporter{lib.LogReporter{}})
+		failed, successful, total := lib.RunChecks(
+			config.Checks,
+			&config.ExportedReporters)
 		if failed >= successful {
 			log.Warnf("Failed/Successful/Total: %d/%d/%d", failed, successful, total)
 		} else {

@@ -1,20 +1,61 @@
 package lib
 
 import (
+	"errors"
+
 	"gopkg.in/yaml.v2"
 )
 
-// ParsedChecks represents the unmarshalled YAML file
-type ParsedChecks struct {
-	Checks *[]Check `yaml:"checks"`
+// ParsedReporter represents the unmarshalled reporters config
+type ParsedReporter struct {
+	Type    string                 `yaml:"type"`
+	Options map[string]interface{} `yaml:"options"`
 }
 
-// ParseYAML parses the given YAML File and outputs a set of Checks
-func ParseYAML(b []byte) (*[]Check, error) {
-	checks := ParsedChecks{}
-	err := yaml.Unmarshal(b, &checks)
+// ParsedConfig represents the unmarshalled YAML file
+type ParsedConfig struct {
+	Checks            *[]Check         `yaml:"checks"`
+	Reporters         []ParsedReporter `yaml:"reporters"`
+	ExportedReporters []Reporter       `yaml:"donotunmarshal"`
+}
+
+// ParseYAML parses the given YAML File and outputs a ParsedConfig struct
+func ParseYAML(b []byte) (ParsedConfig, error) {
+	config := ParsedConfig{}
+	err := yaml.Unmarshal(b, &config)
 	if err != nil {
-		return nil, err
+		return ParsedConfig{}, err
 	}
-	return checks.Checks, nil
+	config.ExportedReporters = []Reporter{}
+	for _, rconfig := range config.Reporters {
+		switch rconfig.Type {
+		case "log":
+			{
+				config.ExportedReporters = append(config.ExportedReporters, LogReporter{})
+			}
+		case "slack":
+			{
+				slackChannel, ok := rconfig.Options["slack_channel"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Slack config slack_channel")
+				}
+				slackToken, ok := rconfig.Options["slack_token"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Slack config slack_token")
+				}
+				failedOnly, ok := rconfig.Options["failed_only"].(bool)
+				if !ok {
+					failedOnly = true
+				}
+				config.ExportedReporters = append(
+					config.ExportedReporters,
+					SlackReporter{
+						SlackChannel: slackChannel,
+						SlackToken:   slackToken,
+						FailedOnly:   failedOnly,
+					})
+			}
+		}
+	}
+	return config, nil
 }
