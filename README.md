@@ -9,7 +9,8 @@ This project requires Go to be installed. On OS X with Homebrew you can just run
 Write a `checks.yml` ([see section below](#example-checksyml)) to define the uptime checks you want to run, along with settings and reporters. Then, running it then should be as simple as:
 
 ```console
-$ make
+$ make get-deps
+$ make build
 $ vim checks.yml
 $ ./bin/bantay check
 ```
