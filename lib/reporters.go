@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/KixPanganiban/bantay/log"
 	"github.com/hako/durafmt"
+	"github.com/mailgun/mailgun-go"
 	"github.com/nlopes/slack"
 )
 
@@ -136,5 +138,63 @@ func (sr SlackReporter) Report(c CheckResult, dc *map[string]int) error {
 		}
 
 	}
+	return nil
+}
+
+// MailgunReporter reports up and down events via email using Mailgun
+type MailgunReporter struct {
+	ServerConfig      ParsedServer
+	MailgunDomain     string
+	MailgunPrivateKey string
+	MailgunRecipients []string
+	MailgunSender     string
+	MailgunExclude    []string
+}
+
+// Report sends an email via Mailgun
+func (mr MailgunReporter) Report(c CheckResult, dc *map[string]int) error {
+	mg := mailgun.NewMailgun(mr.MailgunDomain, mr.MailgunPrivateKey)
+	var (
+		body    string
+		subject string
+	)
+	for _, e := range mr.MailgunExclude {
+		if c.Name == e {
+			return nil
+		}
+	}
+	if c.Success == true && (*dc)[c.Name] != 0 {
+		body = fmt.Sprintf(
+			"%s is back up. Estimated total downtime: %s.",
+			c.Name,
+			durafmt.Parse(time.Duration(math.Ceil((float64((*dc)[c.Name])*float64(mr.ServerConfig.PollInterval))))*time.Second).String(),
+		)
+		subject = fmt.Sprintf(
+			"[%s] %s is back up",
+			time.Now().Format("01/02/06 15:04:05 MST"),
+			c.Name,
+		)
+	} else if c.Success == false && (*dc)[c.Name] == 0 {
+		body = fmt.Sprintf(
+			"%s went down. Reason: %s",
+			c.Name,
+			c.Message,
+		)
+		subject = fmt.Sprintf(
+			"[%s] %s went down",
+			time.Now().Format("01/02/06 15:04:05 MST"),
+			c.Name,
+		)
+	}
+	message := mg.NewMessage(mr.MailgunSender, subject, body, mr.MailgunRecipients...)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	_, _, err := mg.Send(ctx, message)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

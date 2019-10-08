@@ -65,6 +65,50 @@ func ParseYAML(b []byte) (ParsedConfig, error) {
 						FailedOnly:   failedOnly,
 					})
 			}
+		case "mailgun":
+			{
+				mailgunDomain, ok := rconfig.Options["mailgun_domain"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Mailgun config mailgun_domain")
+				}
+				mailgunPrivateKey, ok := rconfig.Options["mailgun_private_key"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Mailgun config mailgun_private_key")
+				}
+				mailgunSender, ok := rconfig.Options["mailgun_sender"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Mailgun config mailgun_sender")
+				}
+				parsedMailgunRecipients, ok := rconfig.Options["mailgun_recipients"].([]interface{})
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required Mailgun config mailgun_recipients")
+				}
+				var mailgunRecipients []string = make([]string, len(parsedMailgunRecipients))
+				for i, pmr := range parsedMailgunRecipients {
+					mailgunRecipients[i] = pmr.(string)
+				}
+				var mailgunExclude []string
+				parsedMailgunExclude, ok := rconfig.Options["mailgun_exclude"].([]interface{})
+				if ok {
+					mailgunExclude = make([]string, len(parsedMailgunExclude))
+					for i, pme := range parsedMailgunExclude {
+						mailgunExclude[i] = pme.(string)
+					}
+				} else {
+					mailgunExclude = make([]string, 0)
+				}
+				config.ExportedReporters = append(
+					config.ExportedReporters,
+					MailgunReporter{
+						ServerConfig:      config.Server,
+						MailgunDomain:     mailgunDomain,
+						MailgunPrivateKey: mailgunPrivateKey,
+						MailgunSender:     mailgunSender,
+						MailgunRecipients: mailgunRecipients,
+						MailgunExclude:    mailgunExclude,
+					},
+				)
+			}
 		}
 	}
 	return config, nil
