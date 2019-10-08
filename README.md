@@ -4,14 +4,27 @@ Lightweight uptime monitor for web services, with support for sending alerts thr
 
 ## Getting started
 
-This project requires Go to be installed. On OS X with Homebrew you can just run `brew install go`.
+On both Docker and your local machine, you need to first make a `checks.yml` ([see section below](#example-checksyml)) to define the uptime checks you want to run, along with settings and reporters.
 
-Write a `checks.yml` ([see section below](#example-checksyml)) to define the uptime checks you want to run, along with settings and reporters. Then, running it then should be as simple as:
+### Running with :whale: Docker
+
+The simplest way to run `bantay` is with Docker.
 
 ```console
-$ make get-deps
+$ make package
+$ docker run -v "$(pwd)/checks.yml":/opt/bantay/bin/checks.yml fipanganiban/bantay:local bantay check
+```
+
+
+### Running on your local machine
+
+This project requires Go to be installed. On OS X with Homebrew you can just run `brew install go`.
+
+Then, running it then should be as simple as:
+
+```console
+$ go get .
 $ make build
-$ vim checks.yml
 $ ./bin/bantay check
 ```
 to run the checks once, or
