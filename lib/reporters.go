@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/KixPanganiban/bantay/log"
+	"github.com/hako/durafmt"
 	"github.com/nlopes/slack"
 )
 
@@ -75,7 +77,7 @@ func (sr SlackReporter) Report(c CheckResult, dc *map[string]int) error {
 						},
 						slack.AttachmentField{
 							Title: "Total Downtime",
-							Value: fmt.Sprintf("Approx %dm", int(math.Ceil((float64((*dc)[c.Name])*float64(sr.ServerConfig.PollInterval))/60))),
+							Value: durafmt.Parse(time.Duration(math.Ceil((float64((*dc)[c.Name]) * float64(sr.ServerConfig.PollInterval)))) * time.Second).String(),
 						},
 					},
 				}
