@@ -15,7 +15,6 @@ help:
 	@echo
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
-	@echo '    make get-deps        runs dep ensure, mostly used for ci.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
@@ -27,15 +26,12 @@ help:
 build:
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
-	go build -ldflags "-X github.com/kixpanganiban/bantay/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/kixpanganiban/bantay/version.BuildDate=${BUILD_DATE}" -o bin/${BIN_NAME}
-
-get-deps:
-	dep ensure
+	go build -ldflags "-X github.com/KixPanganiban/bantay/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/KixPanganiban/bantay/version.BuildDate=${BUILD_DATE}" -o bin/${BIN_NAME}
 
 build-alpine:
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
-	go build -ldflags '-w -linkmode external -extldflags "-static" -X github.com/kixpanganiban/bantay/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/kixpanganiban/bantay/version.BuildDate=${BUILD_DATE}' -o bin/${BIN_NAME}
+	go build -ldflags '-w -linkmode external -extldflags "-static" -X github.com/KixPanganiban/bantay/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/KixPanganiban/bantay/version.BuildDate=${BUILD_DATE}' -o bin/${BIN_NAME}
 
 package:
 	@echo "building image ${BIN_NAME} ${VERSION} $(GIT_COMMIT)"
