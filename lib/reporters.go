@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/KixPanganiban/bantay/log"
@@ -14,7 +15,9 @@ type Reporter interface {
 }
 
 // LogReporter implements Reporter by writing to log
-type LogReporter struct{}
+type LogReporter struct {
+	ServerConfig ParsedServer
+}
 
 // Report writes to log
 func (lr LogReporter) Report(c CheckResult, dc *map[string]int) error {
@@ -33,9 +36,10 @@ func (lr LogReporter) Report(c CheckResult, dc *map[string]int) error {
 
 // SlackReporter reports check outputs to Slack
 type SlackReporter struct {
-	SlackToken   string `yaml:"slack_token"`
-	SlackChannel string `yaml:"slack_channel"`
-	FailedOnly   bool   `yaml:"failed_only"`
+	ServerConfig ParsedServer
+	SlackToken   string
+	SlackChannel string
+	FailedOnly   bool
 }
 
 // Report sends an update to Slack
@@ -68,6 +72,10 @@ func (sr SlackReporter) Report(c CheckResult, dc *map[string]int) error {
 						slack.AttachmentField{
 							Title: "Failed Check Count",
 							Value: strconv.Itoa((*dc)[c.Name]),
+						},
+						slack.AttachmentField{
+							Title: "Total Downtime",
+							Value: fmt.Sprintf("Approx %dm", int(math.Ceil((float64((*dc)[c.Name])*float64(sr.ServerConfig.PollInterval))/60))),
 						},
 					},
 				}
@@ -107,7 +115,7 @@ func (sr SlackReporter) Report(c CheckResult, dc *map[string]int) error {
 						},
 						slack.AttachmentField{
 							Title: "Failed Check Count",
-							Value: strconv.Itoa((*dc)[c.Name]),
+							Value: strconv.Itoa((*dc)[c.Name] + 1),
 						},
 					},
 					Footer: "bantay uptime check",

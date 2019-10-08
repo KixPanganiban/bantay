@@ -37,7 +37,10 @@ func ParseYAML(b []byte) (ParsedConfig, error) {
 		switch rconfig.Type {
 		case "log":
 			{
-				config.ExportedReporters = append(config.ExportedReporters, LogReporter{})
+				config.ExportedReporters = append(config.ExportedReporters,
+					LogReporter{
+						ServerConfig: config.Server,
+					})
 			}
 		case "slack":
 			{
@@ -56,6 +59,7 @@ func ParseYAML(b []byte) (ParsedConfig, error) {
 				config.ExportedReporters = append(
 					config.ExportedReporters,
 					SlackReporter{
+						ServerConfig: config.Server,
 						SlackChannel: slackChannel,
 						SlackToken:   slackToken,
 						FailedOnly:   failedOnly,
