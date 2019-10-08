@@ -1,6 +1,6 @@
 # :dog: bantay
 
-Lightweight uptime monitor for web services
+Lightweight uptime monitor for web services, with support for sending alerts through Slack and email (using Mailgun)
 
 ## Getting started
 
@@ -9,7 +9,8 @@ This project requires Go to be installed. On OS X with Homebrew you can just run
 Write a `checks.yml` ([see section below](#example-checksyml)) to define the uptime checks you want to run, along with settings and reporters. Then, running it then should be as simple as:
 
 ```console
-$ make
+$ make get-deps
+$ make build
 $ vim checks.yml
 $ ./bin/bantay check
 ```
@@ -35,8 +36,52 @@ checks:
     body_match: Hacker News
 reporters:
   - type: log
-  - type: Slack
+  - type: slack
     options:
       slack_channel: YOUR-SLACK-CHANNEL-HERE
       slack_token: YOUR-SLACK-TOKEN-HERE
+  - type: mailgun
+    options:
+      mailgun_domain: YOUR-MAILGUN-DOMAIN
+      mailgun_private_key: YOUR-MAILGUN-PRIVATE-API-KEY
+      mailgun_sender: bantay@yourdomain.io
+      mailgun_recipients: [webmaster@yourdomain.io]
+      mailgun_exclude:
+        - Hacker News
 ```
+
+## `checks.yml` Options
+
+### `server` section
+
+Settings used when running bantay in server mode, ie `./bantay server`
+
+- `poll_interval`: How long to wait for each check of all microservices (in seconds)
+
+### `checks` section
+
+List of items that bantay will run, with their check settings.
+
+- `name`: Unique identifier for each check (case sensitive), used for reporting and alerts
+- `url`: Absolute URL that bantay will poll each time a check is run
+- `valid_status`: HTTP status code to expect from the HTTP response
+- `body_match` (optional): String to search for in the HTTP response
+
+### `reporters` section:
+
+List of reporters that bantay will use to report check results, each with their own set of options.
+
+- `type`: Type of reporter to use. Currently supported: `log` (stdout/stderr), `slack`, `mailgun`
+- `options`: Options specific for each reporter type (more below)
+
+#### Options:
+
+- `slack`
+  - `slack_channel`: ID of the Slack channel to send reports to
+  - `slack_token`: Slack token of the bot/user to use
+- `mailgun`:
+  - `mailgun_domain`: Your Mailgun registered domain
+  - `mailgun_private_key`: Private API key to access the Mailgun V3 API
+  - `mailgun_sender`: Email address to show as sender of alerts
+  - `mailgun_recipients`: List of email addresses to send emails to
+  - `mailgun_exclude`: List of unique check `name`s to exclude from sending email alerts
