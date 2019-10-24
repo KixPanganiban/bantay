@@ -89,12 +89,17 @@ List of reporters that bantay will use to report check results, each with their 
 
 #### Options:
 
-- `slack`
+- `slack` - Sends went down/went up uptime alerts to Slack
   - `slack_channel`: ID of the Slack channel to send reports to
   - `slack_token`: Slack token of the bot/user to use
-- `mailgun`:
+- `mailgun` - Sends went down/went up uptime alerts via email using Mailgun
   - `mailgun_domain`: Your Mailgun registered domain
   - `mailgun_private_key`: Private API key to access the Mailgun V3 API
   - `mailgun_sender`: Email address to show as sender of alerts
   - `mailgun_recipients`: List of email addresses to send emails to
   - `mailgun_exclude`: List of unique check `name`s to exclude from sending email alerts
+- `influxdb` - Sends time-series metrics (up status and request latency) to InfluxDB
+  - `influxdb_host`: Host URL of the InfluxDB 2.0 HTTP server
+  - `influxdb_token`: Token for authenticating with the InfluxDB server
+  - `influxdb_org`: InfluxDB org string
+  - `influxdb_bucket`: InfluxDB bucket to send metrics to
