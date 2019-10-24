@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/KixPanganiban/bantay/log"
 	"github.com/KixPanganiban/bantay/version"
@@ -24,17 +25,20 @@ type CheckResult struct {
 	Name    string
 	Success bool
 	Message string
+	Latency time.Duration
 }
 
 // RunCheck performs the HTTP request necessary to verify if the given Check is up
 func RunCheck(c Check, resChan chan<- CheckResult) {
 	r := req.New()
+	r.SetFlags(req.Lcost)
 	res, err := r.Get(
 		c.URL,
-		req.Header{"User-Agent": fmt.Sprintf("Bantay %s", version.Version)})
+		req.Header{"User-Agent": fmt.Sprintf("Bantay %s", version.Version)},
+	)
 	if err != nil {
 		log.Warnf("Request failed: %s", err.Error())
-		resChan <- CheckResult{Name: c.Name, Success: false, Message: err.Error()}
+		resChan <- CheckResult{Name: c.Name, Success: false, Message: err.Error(), Latency: 0 * time.Second}
 		return
 	}
 	// Perform check on StatusCode
@@ -42,7 +46,7 @@ func RunCheck(c Check, resChan chan<- CheckResult) {
 	responseStatus := response.StatusCode
 	if responseStatus != c.ValidStatus {
 		errMsg := fmt.Sprintf("Status mismatch. Expected %d, got %d.", c.ValidStatus, responseStatus)
-		resChan <- CheckResult{Name: c.Name, Success: false, Message: errMsg}
+		resChan <- CheckResult{Name: c.Name, Success: false, Message: errMsg, Latency: res.Cost()}
 		return
 	}
 	// Perform check on Body
@@ -52,11 +56,11 @@ func RunCheck(c Check, resChan chan<- CheckResult) {
 		responseText := responseBuffer.String()
 		if !strings.Contains(responseText, c.BodyMatch) {
 			errMsg := fmt.Sprintf("String '%s' not found in body.", c.BodyMatch)
-			resChan <- CheckResult{Name: c.Name, Success: false, Message: errMsg}
+			resChan <- CheckResult{Name: c.Name, Success: false, Message: errMsg, Latency: res.Cost()}
 			return
 		}
 	}
-	resChan <- CheckResult{Name: c.Name, Success: true}
+	resChan <- CheckResult{Name: c.Name, Success: true, Latency: res.Cost()}
 	return
 }
 

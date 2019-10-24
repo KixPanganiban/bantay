@@ -9,6 +9,7 @@ import (
 
 	"github.com/KixPanganiban/bantay/log"
 	"github.com/hako/durafmt"
+	"github.com/influxdata/influxdb-client-go"
 	"github.com/mailgun/mailgun-go"
 	"github.com/nlopes/slack"
 )
@@ -28,11 +29,11 @@ func (lr LogReporter) Report(c CheckResult, dc *map[string]int) error {
 	switch c.Success {
 	case true:
 		{
-			log.Infof("[%s] Check successful.", c.Name)
+			log.Infof("[%s] Check successful. [%s]", c.Name, c.Latency)
 		}
 	case false:
 		{
-			log.Debugf("[%s] Check failed. Reason: %s", c.Name, c.Message)
+			log.Debugf("[%s] Check failed. [%s] Reason: %s", c.Name, c.Message, c.Latency)
 		}
 	}
 	return nil
@@ -196,5 +197,43 @@ func (mr MailgunReporter) Report(c CheckResult, dc *map[string]int) error {
 		return err
 	}
 
+	return nil
+}
+
+// InfluxDBReporter writes up/down status and latency to InfluxDB
+type InfluxDBReporter struct {
+	ServerConfig   ParsedServer
+	InfluxDBHost   string
+	InfluxDBToken  string
+	InfluxDBBucket string
+	InfluxDBOrg    string
+}
+
+// Report puts a metric update to InfluxDB
+func (ir InfluxDBReporter) Report(c CheckResult, dc *map[string]int) error {
+	influx, err := influxdb.New(
+		ir.InfluxDBHost,
+		ir.InfluxDBToken,
+	)
+	if err != nil {
+		return err
+	}
+	var up int8
+	if c.Success == true {
+		up = 1
+	} else {
+		up = 0
+	}
+	metrics := []influxdb.Metric{
+		influxdb.NewRowMetric(
+			map[string]interface{}{"latency": int64(c.Latency / time.Millisecond), "up": up},
+			"check-result",
+			map[string]string{"check-name": c.Name},
+			time.Now(),
+		),
+	}
+	if _, err := influx.Write(context.Background(), ir.InfluxDBBucket, ir.InfluxDBOrg, metrics...); err != nil {
+		return err
+	}
 	return nil
 }

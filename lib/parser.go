@@ -109,6 +109,35 @@ func ParseYAML(b []byte) (ParsedConfig, error) {
 					},
 				)
 			}
+		case "influxdb":
+			{
+				influxDBHost, ok := rconfig.Options["influxdb_host"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required InfluxDB config influxdb_host")
+				}
+				influxDBToken, ok := rconfig.Options["influxdb_token"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required InfluxDB config influxdb_token")
+				}
+				influxDBOrg, ok := rconfig.Options["influxdb_org"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required InfluxDB config influxdb_org")
+				}
+				influxDBBucket, ok := rconfig.Options["influxdb_bucket"].(string)
+				if !ok {
+					return ParsedConfig{}, errors.New("can't parse required InfluxDB config influxdb_bucket")
+				}
+				config.ExportedReporters = append(
+					config.ExportedReporters,
+					InfluxDBReporter{
+						ServerConfig:   config.Server,
+						InfluxDBHost:   influxDBHost,
+						InfluxDBToken:  influxDBToken,
+						InfluxDBOrg:    influxDBOrg,
+						InfluxDBBucket: influxDBBucket,
+					},
+				)
+			}
 		}
 	}
 	return config, nil
